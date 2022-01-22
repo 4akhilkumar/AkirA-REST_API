@@ -1,6 +1,3 @@
-from django.http.response import HttpResponse
-from django.shortcuts import render
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -11,34 +8,37 @@ import random
 class IndexView(APIView):
     def get(self, request, MetaKey, EncryptedMetaKey):
         username = MetaKey
+        encryptedText = EncryptedMetaKey
+        encryptedTextLength = len(encryptedText)
+
         ASCII_Username = []
-        for i in range(len(username)):
-            ASCII_Username.append(ord(username[i]))
-        ASCII_Username_Sum = sum(ASCII_Username)
+        for i in username:
+            ASCII_Username.append(ord(i))
 
-        encrypted_username = ""
-        for i in range(len(username)):
-            encrypted_username += chr(ord(username[i]) + ASCII_Username_Sum)
+        ASCII_Username_Sum = list(map(int, str(sum(ASCII_Username))))
 
-        ep = EncryptedMetaKey
-        afterRAN = re.sub('[0-9a-zA-Z]+', '', ep)
+        lengthUsername10 = len(username) * 10
+        password_length = encryptedTextLength / lengthUsername10
 
-        List1 = list(afterRAN)
-        List2 = list(encrypted_username)
-        checkKeyEncrypted =  any(item in List1 for item in List2)
+        encryptedText_list = []
+        for i in range(int(password_length)):
+            encryptedText_list.append(encryptedText[i*int(lengthUsername10):(i+1)*int(lengthUsername10)])
 
-        l_rot = 0
-        r_rot = len(username)
-        temp = (l_rot - r_rot) % len(afterRAN)
-        encrypted_password = afterRAN[temp : ] + afterRAN[ : temp]
+        randomDigits = []
+        for i in range(len(encryptedText_list)):
+            randomDigits.append(encryptedText_list[i][-ASCII_Username_Sum[2]])
 
-        password = ""
-        de_key_length = len(encrypted_password) - len(username)
-        for i in range(de_key_length):
-            password += chr(ord(encrypted_password[i]) - ASCII_Username_Sum)
+        final_list = []
+        for i in range(len(encryptedText_list)):
+            final_list.append(encryptedText_list[i][int(randomDigits[i])])
+
+        Plain_password_list = []
+        for i in final_list:
+            Plain_password_list.append(chr(ord(i) - max(ASCII_Username_Sum)))
+
+        password = "".join(Plain_password_list)
 
         data = {
-            'checkKeyEncrypted': checkKeyEncrypted,
             'MetaKey': password,
         }
         return Response(data)
