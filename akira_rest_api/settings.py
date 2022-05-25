@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     'rest_framework',
-    'akira_security_api.apps.AkiraSecurityApiConfig',
+    'akira_api_apps.akira_security_api.apps.AkiraSecurityApiConfig',
+    'akira_api_apps.sentimentAnalysis.apps.SentimentanalysisConfig',
 ]
 
 MIDDLEWARE = [

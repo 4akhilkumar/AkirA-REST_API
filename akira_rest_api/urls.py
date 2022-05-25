@@ -16,6 +16,6 @@ Including another URLconf
 from django.urls import path, include
 
 urlpatterns = [
-    # path('api-auth/', include('rest_framework.urls')),
-    path('', include('akira_security_api.urls'))
+    path('', include('akira_api_apps.akira_security_api.urls')),
+    path('', include('akira_api_apps.sentimentAnalysis.urls'))
 ]
