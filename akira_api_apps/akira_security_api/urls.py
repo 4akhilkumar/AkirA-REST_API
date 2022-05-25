@@ -1,5 +1,5 @@
 from django.urls import path
-from akira_security_api import views
+from . import views
 
 urlpatterns = [
     path('fetchKey/', views.fetchKey, name='fetchKey'),
