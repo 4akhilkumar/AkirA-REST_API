@@ -2,10 +2,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-import re
-import secrets
-import random
+from cryptography.fernet import Fernet
 import math
+import re
 import requests
 
 @api_view(['POST'])
@@ -72,34 +71,14 @@ def fetchKey(request):
         }
         return Response(data)
 
+key = Fernet.generate_key()
+f = Fernet(key)
+
 class CustomEncryption(APIView):
     def get(self, request, MetaKey):
-        RanSalt = secrets.token_urlsafe(90)
-        SpecialChracter = ["@", "#", "(", ")"] * len(MetaKey)
-        EncryptedUsername = ""
-        for i in range(len(MetaKey)):
-            EncryptedUsername += chr(ord(MetaKey[i]) + 468)
-            
-        for i in range(len(SpecialChracter)):
-            ran = random.randint(0, len(RanSalt) - 1)
-            RanSalt = RanSalt[:ran] + SpecialChracter[i] + RanSalt[ran:]
-
-        SpecialChracterPos = []
-        for i in range(len(RanSalt)):
-            if RanSalt[i] in SpecialChracter:
-                SpecialChracterPos.append(i+1)
-        
-        randomPositions = random.sample(SpecialChracterPos, (len(MetaKey)))
-        randomPositions.sort()
-
-        to_modify = list(RanSalt)
-        replacements = list(EncryptedUsername)
-
-        for (index, replacement) in zip(randomPositions, replacements):
-            to_modify[index] = replacement
-        
-        FinalEncryptedUsername = "".join(to_modify)
-        FinalEncryptedUsername = re.sub('[@#()]+', '', FinalEncryptedUsername)
+        # convert MetaKey to bytes-like object
+        MetaKey = MetaKey.encode('utf-8')
+        FinalEncryptedUsername = f.encrypt(b"%s" % MetaKey)
 
         data = {
             'EncryptedUsername': FinalEncryptedUsername,
@@ -108,16 +87,19 @@ class CustomEncryption(APIView):
 
 class CustomDecryption(APIView):
     def get(self, request, EncryptedMetaData):
-        ep = EncryptedMetaData
-        afterRAN = re.sub('[0-9a-zA-Z]+', '', ep)
-        afterRAN = re.sub('[-_]+', '', afterRAN)
 
-        DecryptedUsername = ""
-        for i in range(len(afterRAN)):
-            DecryptedUsername += chr(ord(afterRAN[i]) - 468)
+        EncryptedMetaData = EncryptedMetaData.encode('utf-8')
+
+        status = False
+        try:
+            FinalDecryptedUsername = f.decrypt(b'%s' % EncryptedMetaData)
+            status = True
+        except Exception:
+            status = False
 
         data = {
-            'DecryptedUsername': DecryptedUsername,
+            'DecryptedUsername': FinalDecryptedUsername,
+            'ProcessStatus': status
         }
         return Response(data)
 
